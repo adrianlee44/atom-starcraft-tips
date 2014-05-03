@@ -3,12 +3,12 @@
 {WorkspaceView, $} = require 'atom'
 StarcraftTipsView  = require '../lib/starcraft-tips-view'
 
-describe "StarcraftTips", ->
+xdescribe "StarcraftTips", ->
   [starcraftTips, starcraftTipsView] = []
 
   beforeEach ->
     atom.config.set "starcraft-tips.displayDuration", 50
-    atom.config.set "starcraft-tips.fadeDuration", 1
+    atom.config.set "starcr`aft-tips.fadeDuration", 1
 
   activatePackage = (callback) ->
     waitsForPromise ->
