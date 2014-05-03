@@ -13,8 +13,7 @@ describe "StarcraftTips", ->
   activatePackage = (callback) ->
     waitsForPromise ->
       atom.packages.activatePackage('starcraft-tips').then ({mainModule}) ->
-        starcraftTipsView = mainModule.starcraftTipsView
-        mainModule
+        {starcraftTipsView} = mainModule
 
     runs -> callback()
 
@@ -26,6 +25,7 @@ describe "StarcraftTips", ->
     describe "when the pane is empty", ->
       it "attaches the view after a delay", ->
         expect(atom.workspaceView.getActivePaneView().getItems().length).toBe 0
+
         activatePackage ->
           expect(starcraftTipsView.parent()).not.toExist()
           advanceClock 1001
@@ -43,6 +43,7 @@ describe "StarcraftTips", ->
         activatePackage ->
           advanceClock 1001
           expect(starcraftTipsView.parent()).toExist()
+
           atom.workspaceView.getActivePaneView().splitRight()
           expect(starcraftTipsView.parent()).not.toExist()
 
