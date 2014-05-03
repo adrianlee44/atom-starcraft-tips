@@ -1,7 +1,7 @@
 {
   "name": "starcraft-tips",
   "main": "./lib/starcraft-tips",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Displays tips about Starcraft 2 in the background when there are no open editors",
   "repository": {
     "type": "git",
