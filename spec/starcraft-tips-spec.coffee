@@ -1,17 +1,17 @@
 # Spec taken from atom/background-tips, https://github.com/atom/background-tips
 
-StarcraftTipsViews = require '../lib/starcraft-tips-view'
+StarcraftTipsView = require '../lib/starcraft-tips-view'
 
 describe "StarcraftTips", ->
-  [workspaceElement, starcraftTipsViews] = []
+  [workspaceElement, starcraftTipsView] = []
 
-  StarcraftTipsViews::DisplayDuration = 5
-  StarcraftTipsViews::FadeDuration = 1
+  StarcraftTipsView::DisplayDuration = 5
+  StarcraftTipsView::FadeDuration = 1
 
   activatePackage = (callback) ->
     waitsForPromise ->
       atom.packages.activatePackage('starcraft-tips').then ({mainModule}) ->
-        {starcraftTipsViews} = mainModule
+        {starcraftTipsView} = mainModule
 
     runs ->
       callback()
@@ -29,26 +29,26 @@ describe "StarcraftTips", ->
         expect(atom.workspace.getActivePane().getItems().length).toBe 0
 
         activatePackage ->
-          expect(starcraftTipsViews.parentNode).toBeFalsy()
-          advanceClock StarcraftTipsViews::StartDelay + 1
-          expect(starcraftTipsViews.parentNode).toBeTruthy()
+          expect(starcraftTipsView.parentNode).toBeFalsy()
+          advanceClock StarcraftTipsView::StartDelay + 1
+          expect(starcraftTipsView.parentNode).toBeTruthy()
 
     describe "when the pane is not empty", ->
       it "does not attach the view", ->
         waitsForPromise -> atom.workspace.open()
 
         activatePackage ->
-          advanceClock StarcraftTipsViews::StartDelay + 1
-          expect(starcraftTipsViews.parentNode).toBeFalsy()
+          advanceClock StarcraftTipsView::StartDelay + 1
+          expect(starcraftTipsView.parentNode).toBeFalsy()
 
     describe "when a second pane is created", ->
       it "detaches the view", ->
         activatePackage ->
-          advanceClock StarcraftTipsViews::StartDelay + 1
-          expect(starcraftTipsViews.parentNode).toBeTruthy()
+          advanceClock StarcraftTipsView::StartDelay + 1
+          expect(starcraftTipsView.parentNode).toBeTruthy()
 
           atom.workspace.getActivePane().splitRight()
-          expect(starcraftTipsViews.parentNode).toBeFalsy()
+          expect(starcraftTipsView.parentNode).toBeFalsy()
 
   describe "when the package is activated when there are multiple panes", ->
     beforeEach ->
@@ -57,37 +57,37 @@ describe "StarcraftTips", ->
 
     it "does not attach the view", ->
       activatePackage ->
-        advanceClock StarcraftTipsViews::StartDelay + 1
-        expect(starcraftTipsViews.parentNode).toBeFalsy()
+        advanceClock StarcraftTipsView::StartDelay + 1
+        expect(starcraftTipsView.parentNode).toBeFalsy()
 
     describe "when all but the last pane is destroyed", ->
       it "attaches the view", ->
         activatePackage ->
           atom.workspace.getActivePane().destroy()
-          advanceClock StarcraftTipsViews::StartDelay + 1
-          expect(starcraftTipsViews.parentNode).toBeTruthy()
+          advanceClock StarcraftTipsView::StartDelay + 1
+          expect(starcraftTipsView.parentNode).toBeTruthy()
 
           atom.workspace.getActivePane().splitRight()
-          expect(starcraftTipsViews.parentNode).toBeFalsy()
+          expect(starcraftTipsView.parentNode).toBeFalsy()
 
           atom.workspace.getActivePane().destroy()
-          expect(starcraftTipsViews.parentNode).toBeTruthy()
+          expect(starcraftTipsView.parentNode).toBeTruthy()
 
   describe "when the view is attached", ->
     beforeEach ->
       expect(atom.workspace.getPanes().length).toBe 1
 
       activatePackage ->
-        advanceClock StarcraftTipsViews::StartDelay
-        advanceClock StarcraftTipsViews::FadeDuration
+        advanceClock StarcraftTipsView::StartDelay
+        advanceClock StarcraftTipsView::FadeDuration
 
     it "has text in the message", ->
-      expect(starcraftTipsViews.parentNode).toBeTruthy()
-      expect(starcraftTipsViews.message.textContent).toBeTruthy()
+      expect(starcraftTipsView.parentNode).toBeTruthy()
+      expect(starcraftTipsView.message.textContent).toBeTruthy()
 
     it "changes text in the message", ->
-      oldText = starcraftTipsViews.message.textContent
-      waits StarcraftTipsViews::DisplayDuration + StarcraftTipsViews::FadeDuration
+      oldText = starcraftTipsView.message.textContent
+      waits StarcraftTipsView::DisplayDuration + StarcraftTipsView::FadeDuration
       runs ->
-        advanceClock StarcraftTipsViews::FadeDuration
-        expect(starcraftTipsViews.message.textContent).not.toEqual(oldText)
+        advanceClock StarcraftTipsView::FadeDuration
+        expect(starcraftTipsView.message.textContent).not.toEqual(oldText)
