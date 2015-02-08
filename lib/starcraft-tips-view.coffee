@@ -1,52 +1,79 @@
-{View} = require 'atom'
+{CompositeDisposable} = require 'atom'
 tips   = require './tips'
 
+template = """
+  <ul class="centered background-message">
+    <li class="message"></li>
+  </ul>
+"""
+
 module.exports =
-class StarcraftTipsView extends View
-  @content: ->
-    @ul class: 'background-tips centered background-message', =>
-      @li outlet: 'message'
+class StarcraftTipsElement extends HTMLElement
+  StartDelay:      1000
+  DisplayDuration: 10000
+  FadeDuration:    300
 
-  initialize: ->
-    # Randomize initial starting index
-    len    = tips.length
-    @index = Math.round(Math.random() * len) % len
+  createdCallback: ->
+    @index = -1
 
-    atom.workspaceView.on "pane-container:active-pane-item-changed pane:attached pane:removed", =>
-      @updateVisibility()
-    setTimeout @start, atom.config.get("starcraft-tips.startDelay")
+    @disposables = new CompositeDisposable
+    @disposables.add atom.workspace.onDidAddPane => @updateVisibility()
+    @disposables.add atom.workspace.onDidDestroyPane => @updateVisibility()
+    @disposables.add atom.workspace.onDidChangeActivePaneItem => @updateVisibility()
+
+    @startTimeout = setTimeout((=> @start()), @StartDelay)
+
+  attachedCallback: ->
+    @innerHTML = template
+    @message = @querySelector('.message')
+
+  destroy: ->
+    @stop()
+    @disposables.dispose()
+    @destroyed = true
 
   attach: ->
-    paneView = atom.workspaceView.getActivePaneView()
-    top      = paneView.children(".item-views").position()?.top or 0
-    @css "top", top
-    paneView.append this
+    paneView   = atom.views.getView(atom.workspace.getActivePane())
+    top        = paneView.querySelector('.item-views')?.offsetTop or 0
+    @style.top = top + 'px'
+    paneView.appendChild this
+
+  detach: ->
+    @remove()
 
   updateVisibility: ->
     if @shouldBeAttached() then @start() else @stop()
 
   shouldBeAttached: ->
-    atom.workspaceView.getPaneViews().length is 1 and not atom.workspace.getActivePaneItem()?
+    atom.workspace.getPanes().length is 1 and not atom.workspace.getActivePaneItem()?
 
   start: =>
     return if not @shouldBeAttached() or @interval?
 
-    @message.hide()
+    len = tips.length
+    @index = Math.round(Math.random() * len) % len
+
     @attach()
     @showNextTip()
 
-    displayDuration = atom.config.get("starcraft-tips.displayDuration")
-    @interval       = setInterval(@showNextTip, displayDuration)
+    @interval = setInterval((=> @showNextTip()), @DisplayDuration)
 
   stop: =>
     @detach()
-    clearInterval @interval if @interval?
+    clearInterval(@interval) if @interval?
+    clearTimeout(@startTimeout)
+    clearTimeout(@nextTipTimeout)
     @interval = null
 
-  showNextTip: =>
-    @index       = ++@index % tips.length
-    fadeDuration = atom.config.get("starcraft-tips.fadeDuration")
-    @message.fadeOut(fadeDuration, =>
-      @message.html tips[@index]
-      @message.fadeIn fadeDuration
-    )
+  showNextTip: ->
+    @index = ++@index % tips.length
+    @message.classList.remove 'fade-in'
+    @nextTipTimeout = setTimeout =>
+      @message.innerHTML = tips[@index]
+      @message.classList.remove 'fade-out'
+      @message.classList.add 'fade-in'
+    , @FadeDuration
+
+module.exports = document.registerElement 'starcraft-tips', {
+  prototype: StarcraftTipsElement.prototype
+}

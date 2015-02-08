@@ -1,84 +1,93 @@
-# Mostly taken from atom/background-tips
+# Spec taken from atom/background-tips, https://github.com/atom/background-tips
 
-{WorkspaceView, $} = require 'atom'
-StarcraftTipsView  = require '../lib/starcraft-tips-view'
+StarcraftTipsViews = require '../lib/starcraft-tips-view'
 
-xdescribe "StarcraftTips", ->
-  [starcraftTips, starcraftTipsView] = []
+describe "StarcraftTips", ->
+  [workspaceElement, starcraftTipsViews] = []
 
-  beforeEach ->
-    atom.config.set "starcraft-tips.displayDuration", 50
-    atom.config.set "starcr`aft-tips.fadeDuration", 1
+  StarcraftTipsViews::DisplayDuration = 5
+  StarcraftTipsViews::FadeDuration = 1
 
   activatePackage = (callback) ->
     waitsForPromise ->
       atom.packages.activatePackage('starcraft-tips').then ({mainModule}) ->
-        {starcraftTipsView} = mainModule
+        {starcraftTipsViews} = mainModule
 
-    runs -> callback()
+    runs ->
+      callback()
+
+  beforeEach ->
+    workspaceElement = atom.views.getView(atom.workspace)
+    jasmine.attachToDOM(workspaceElement)
 
   describe "when the package is activated when there is only one pane", ->
     beforeEach ->
-      atom.workspaceView = new WorkspaceView
-      expect(atom.workspaceView.getPaneViews().length).toBe 1
+      expect(atom.workspace.getPanes().length).toBe 1
 
     describe "when the pane is empty", ->
       it "attaches the view after a delay", ->
-        expect(atom.workspaceView.getActivePaneView().getItems().length).toBe 0
+        expect(atom.workspace.getActivePane().getItems().length).toBe 0
 
         activatePackage ->
-          expect(starcraftTipsView.parent()).not.toExist()
-          advanceClock 1001
-          expect(starcraftTipsView.parent()).toExist()
+          expect(starcraftTipsViews.parentNode).toBeFalsy()
+          advanceClock StarcraftTipsViews::StartDelay + 1
+          expect(starcraftTipsViews.parentNode).toBeTruthy()
 
     describe "when the pane is not empty", ->
       it "does not attach the view", ->
-        atom.workspaceView.getActivePaneView().activateItem $("item")
+        waitsForPromise -> atom.workspace.open()
+
         activatePackage ->
-          advanceClock 1001
-          expect(starcraftTipsView.parent()).not.toExist()
+          advanceClock StarcraftTipsViews::StartDelay + 1
+          expect(starcraftTipsViews.parentNode).toBeFalsy()
 
     describe "when a second pane is created", ->
       it "detaches the view", ->
         activatePackage ->
-          advanceClock 1001
-          expect(starcraftTipsView.parent()).toExist()
+          advanceClock StarcraftTipsViews::StartDelay + 1
+          expect(starcraftTipsViews.parentNode).toBeTruthy()
 
-          atom.workspaceView.getActivePaneView().splitRight()
-          expect(starcraftTipsView.parent()).not.toExist()
+          atom.workspace.getActivePane().splitRight()
+          expect(starcraftTipsViews.parentNode).toBeFalsy()
 
   describe "when the package is activated when there are multiple panes", ->
     beforeEach ->
-      atom.workspaceView = new WorkspaceView
-      atom.workspaceView.getActivePaneView().splitRight()
-      expect(atom.workspaceView.getPaneViews().length).toBe 2
+      atom.workspace.getActivePane().splitRight()
+      expect(atom.workspace.getPanes().length).toBe 2
 
     it "does not attach the view", ->
       activatePackage ->
-        advanceClock 1001
-        expect(starcraftTipsView.parent()).not.toExist()
-
+        advanceClock StarcraftTipsViews::StartDelay + 1
+        expect(starcraftTipsViews.parentNode).toBeFalsy()
 
     describe "when all but the last pane is destroyed", ->
       it "attaches the view", ->
         activatePackage ->
-          atom.workspaceView.getActivePaneView().remove()
-          advanceClock 1001
-          expect(starcraftTipsView.parent()).toExist()
+          atom.workspace.getActivePane().destroy()
+          advanceClock StarcraftTipsViews::StartDelay + 1
+          expect(starcraftTipsViews.parentNode).toBeTruthy()
+
+          atom.workspace.getActivePane().splitRight()
+          expect(starcraftTipsViews.parentNode).toBeFalsy()
+
+          atom.workspace.getActivePane().destroy()
+          expect(starcraftTipsViews.parentNode).toBeTruthy()
 
   describe "when the view is attached", ->
     beforeEach ->
-      atom.workspaceView = new WorkspaceView
-      expect(atom.workspaceView.getPaneViews().length).toBe 1
+      expect(atom.workspace.getPanes().length).toBe 1
+
       activatePackage ->
-        advanceClock 1001
+        advanceClock StarcraftTipsViews::StartDelay
+        advanceClock StarcraftTipsViews::FadeDuration
 
     it "has text in the message", ->
-      expect(starcraftTipsView.message.text()).toBeTruthy()
+      expect(starcraftTipsViews.parentNode).toBeTruthy()
+      expect(starcraftTipsViews.message.textContent).toBeTruthy()
 
     it "changes text in the message", ->
-      oldText = starcraftTipsView.message.text()
-
-      waits 100
+      oldText = starcraftTipsViews.message.textContent
+      waits StarcraftTipsViews::DisplayDuration + StarcraftTipsViews::FadeDuration
       runs ->
-        expect(starcraftTipsView.message.text()).not.toEqual oldText
+        advanceClock StarcraftTipsViews::FadeDuration
+        expect(starcraftTipsViews.message.textContent).not.toEqual(oldText)

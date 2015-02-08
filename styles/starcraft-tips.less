@@ -1,0 +1,35 @@
+// The ui-variables file is provided by base themes provided by Atom.
+//
+// See https://github.com/atom/atom-dark-ui/blob/master/stylesheets/ui-variables.less
+// for a full listing of what's available.
+@import "ui-variables";
+
+atom-workspace .horizontal .vertical {
+  position: relative;
+}
+
+starcraft-tips {
+  display: block;
+
+  ul {
+    -webkit-user-select: none;
+    cursor: default;
+
+    li {
+      opacity: 0;
+      padding: 0 30px;
+      transition: opacity .3s;
+
+      .keystroke {
+        border: 2px solid;
+        padding: 0 @component-padding/2;
+        border-radius: @component-border-radius * 3;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+    }
+  }
+
+  .fade-in {
+    opacity: 1;
+  }
+}
